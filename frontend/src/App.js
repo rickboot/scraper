@@ -55,7 +55,7 @@ function App() {
     try {
       await axios.post(`${URL}/start-scraper`, {
         search_text: newSearchText,
-        url: 'https://amazon.com',
+        url: 'https://amazon.ca',
       });
 
       alert('Scraper started successfully');

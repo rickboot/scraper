@@ -50,9 +50,9 @@ const TrackedProduct = sequelize.define('TrackedProduct', {
 app.use(cors());
 app.use(express.json());
 
-app.get('/', (req, res) => {
-  res.send('hello world!');
-});
+// app.get('/', (req, res) => {
+//   res.send('hello world!');
+// });
 
 app.post('/start-scraper', (req, res) => {
   const { url, search_text } = req.body; // express.json converts search-text to search_text?
@@ -76,7 +76,9 @@ app.post('/start-scraper', (req, res) => {
 app.post('/results', (req, res) => {
   const { data, search_text, source } = req.body;
 
-  console.log('reqbody ', req.body.data[0]);
+  console.log('handling post /results');
+  console.log('req.body.data', req.body.data);
+
   data.forEach((item) => console.log('item: ', item));
   console.log('data: ', data);
   console.log('source: ', source);

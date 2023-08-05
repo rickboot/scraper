@@ -5,7 +5,7 @@ import os
 from amazon import get_product as get_amazon_product
 from requests import post
 
-AMAZON = "https://amazon.com"
+AMAZON = "https://amazon.ca"
 
 URLS = {
     AMAZON: {
@@ -18,15 +18,15 @@ URLS = {
 available_urls = URLS.keys()
 
 
-def load_auth():
-    FILE = os.path.join("Scraper", "auth.json")
-    with open(FILE, "r") as f:
-        return json.load(f)
+# def load_auth():
+#     FILE = os.path.join("Scraper", "auth.json")
+#     with open(FILE, "r") as f:
+#         return json.load(f)
 
 # place your bright data credentials in auth.json file with keys: "username", "password" and "host"
-cred = load_auth()
-auth = f'{cred["username"]}:{cred["password"]}'
-browser_url = f'wss://{auth}@{cred["host"]}'
+# cred = load_auth()
+# auth = f'{cred["username"]}:{cred["password"]}'
+# browser_url = f'wss://{auth}@{cred["host"]}'
 
 
 async def search(metadata, page, search_text):
@@ -50,6 +50,9 @@ async def search(metadata, page, search_text):
 
 async def get_products(page, search_text, selector, get_product):
     print("Retrieving products.")
+
+    print(page)
+
     product_divs = await page.query_selector_all(selector)
     valid_products = []
     words = search_text.split(" ")
@@ -84,7 +87,6 @@ def post_results(results, endpoint, search_text, source):
         "Content-Type": "application/json"
     }
     data = {"data": results, "search_text": search_text, "source": source}
-
     print("Sending request to", endpoint)
     response = post("http://localhost:5050" + endpoint,
                     headers=headers, json=data)
@@ -99,11 +101,15 @@ async def main(url, search_text, response_route):
 
     async with async_playwright() as pw:
         print('Connecting to browser.')
-        browser = await pw.chromium.connect_over_cdp(browser_url)
+
+        # Rick - modded to NOT use bright data proxy
+        # browser = await pw.chromium.connect_over_cdp(browser_url)
+        browser = await pw.chromium.launch()
+
         page = await browser.new_page()
-        print("Connected.")
         await page.goto(url, timeout=120000)
-        print("Loaded initial page.")
+        
+        print("Page loaded. Searching...")
         search_page = await search(metadata, page, search_text)
 
         def func(x): return None
@@ -112,9 +118,15 @@ async def main(url, search_text, response_route):
         else:
             raise Exception('Invalid URL')
 
+
+        print(type(search_page))
+
+
         results = await get_products(search_page, search_text, metadata["product_selector"], func)
-        print("Saving results.")
+        print("Posting results.")
         post_results(results, response_route, search_text, url)
+
+        print('results', results)
 
         await browser.close()
 
